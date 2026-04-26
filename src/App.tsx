@@ -1,121 +1,107 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react'
+import { marked } from 'marked'
 
 function App() {
-  const [count, setCount] = useState(0)
+  // 1. 初始化時先從 localStorage 攞返上次寫過嘅嘢
+  const [markdown, setMarkdown] = useState<string>(() => {
+    return localStorage.getItem('markdown-content') || '# Start writing here...';
+  });
+
+  // 2. 當 markdown 內容變動，自動儲存
+  useEffect(() => {
+    localStorage.setItem('markdown-content', markdown);
+  }, [markdown]);
+
+  const getHtml = () => {
+    return { __html: marked.parse(markdown) };
+  };
+
+  const downloadFile = () => {
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `document-${new Date().toLocaleDateString()}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <div style={{ 
+      backgroundColor: '#f5f5f7', // 經典 Apple 灰底
+      minHeight: '100vh', 
+      padding: '40px', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <header style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto 20px auto', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center' 
+      }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#1d1d1f' }}>Markdown Editor</h1>
+        <button 
+          onClick={downloadFile}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#0071e3',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '18px', // 圓角按鈕
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
         >
-          Count is {count}
+          Export File
         </button>
-      </section>
+      </header>
+      
+      <main style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        display: 'flex', 
+        gap: '20px', 
+        height: '75vh' 
+      }}>
+        {/* 輸入區 */}
+        <textarea
+          style={{
+            flex: 1,
+            padding: '30px',
+            fontSize: '18px', 
+            lineHeight: '1.6',
+            borderRadius: '12px',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)', // 微陰影
+            fontFamily: '"SF Mono", Menlo, monospace',
+            outline: 'none',
+            resize: 'none'
+          }}
+          value={markdown}
+          onChange={(e) => setMarkdown(e.target.value)}
+          placeholder="Type Markdown here..."
+        />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* 預覽區 */}
+        <div
+          style={{
+            flex: 1,
+            padding: '30px',
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            overflowY: 'auto',
+            lineHeight: '1.6'
+          }}
+          className="prose" // 模擬現代排版
+          dangerouslySetInnerHTML={getHtml()}
+        />
+      </main>
+    </div>
   )
 }
 
